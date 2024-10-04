@@ -1,6 +1,7 @@
 package main
 
 import (
+	"blog_api/internal/post"
 	"blog_api/internal/storage/postgresql"
 	"blog_api/pkg/config"
 	"blog_api/pkg/logger"
@@ -19,7 +20,7 @@ func main() {
 	log.Info("Log and config initiated", slog.Attr{Key: "env", Value: slog.StringValue(cfg.Env)})
 
 	log.Info("Connecting database ...")
-	_, err := postgresql.InitDB(context.TODO())
+	storage, err := postgresql.InitDB(context.TODO())
 	if err != nil {
 		log.Error("Error connection datsbase", logger.Err(err))
 		return
@@ -33,6 +34,8 @@ func main() {
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
+
+	router.Post("/post", post.CreatePost(log, storage))
 
 	srv := &http.Server{
 		Addr: cfg.Address,
