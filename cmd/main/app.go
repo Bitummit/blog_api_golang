@@ -26,6 +26,8 @@ func main() {
 		log.Error("Error connection datsbase", logger.Err(err))
 		return
 	}
+	defer storage.DB.Close()
+
 	log.Info("Success connecting database")
 
 	router := chi.NewRouter()
@@ -37,10 +39,10 @@ func main() {
 	router.Use(middleware.URLFormat)
 	router.Use(utils.SetJSONContentType)
 
-	router.Post("/post", post.CreatePostHandler(log, storage))
-	router.Get("/post", post.ListPostHandler(log, storage))
-	router.Get("/post/{id}", post.GetPostHandler(log, storage))
-
+	router.Post("/post/", post.CreatePostHandler(log, storage))
+	router.Get("/post/", post.ListPostHandler(log, storage))
+	router.Get("/post/{id}/", post.GetPostHandler(log, storage))
+	router.Delete("/post/{id}/", post.DeletePostHandler(log, storage))
 
 
 	srv := &http.Server{
@@ -53,9 +55,17 @@ func main() {
 	log.Info("Starting server ...", slog.String("address", cfg.Address))
 
 	if err := srv.ListenAndServe(); err != nil {
-		log.Error("Cant start server", logger.Err(err))
+		log.Error("Can't start server", logger.Err(err))
 	}
 
 	log.Info("Server stopped")
 
 }
+
+// TODO: add author table and constraint to blog
+// TODO: filtering
+// TODO: sorting
+// TODO: pagination
+// TODO: add user table and microservice(gRPC)
+// TODO: jwt
+// TODO: middleware checking jwt

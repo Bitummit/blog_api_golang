@@ -21,10 +21,6 @@ type CreatePostRequest struct{
 	Author string `json:"author" validate:"required"`
 }
 
-type CreatePostResponse struct {
-	utils.Response
-
-}
 
 func CreatePostHandler(log *slog.Logger, queryTool storage.PostQueryFunctions) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -135,5 +131,37 @@ func GetPostHandler(log *slog.Logger, queryTool storage.PostQueryFunctions) http
 			Response: utils.OK(),
 			Post: post,
 		})
+	}
+}
+
+
+
+func DeletePostHandler(log *slog.Logger, queryTool storage.PostQueryFunctions) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log = slog.With(
+			slog.String("request_id", middleware.GetReqID(r.Context())),
+		)
+
+		id := chi.URLParam(r, "id")
+		int_id, err := strconv.Atoi(id)
+		if err != nil {
+			log.Error("id is not integer", logger.Err(err))
+
+			w.WriteHeader(http.StatusBadRequest)
+			render.JSON(w, r, utils.Error("validation error: id is not int"))
+			return
+		}
+
+		if err = queryTool.DeletePost(context.Background(), int_id); err != nil {
+			log.Error("query error on deleting post", logger.Err(err))
+			
+			w.WriteHeader(http.StatusInternalServerError)
+			render.JSON(w, r, utils.Error("server error while deleting post"))
+			return
+		} 
+		
+		w.WriteHeader(http.StatusOK)
+		render.JSON(w, r, utils.OK())
+
 	}
 }
