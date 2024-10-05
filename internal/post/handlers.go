@@ -7,7 +7,9 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"strconv"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 	"github.com/go-playground/validator/v10"
@@ -24,7 +26,7 @@ type CreatePostResponse struct {
 
 }
 
-func CreatePost(log *slog.Logger, queryTool storage.PostQueryFunctions) http.HandlerFunc {
+func CreatePostHandler(log *slog.Logger, queryTool storage.PostQueryFunctions) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log = slog.With(
 			slog.String("request_id", middleware.GetReqID(r.Context())),
@@ -45,7 +47,7 @@ func CreatePost(log *slog.Logger, queryTool storage.PostQueryFunctions) http.Han
 			log.Error("Validate error", logger.Err(validErr))
 
 			w.WriteHeader(http.StatusBadRequest)
-			render.JSON(w, r, validErr)
+			render.JSON(w, r, utils.Error(validErr.Error()))
 			return
 		}
 		post := storage.Post{
@@ -65,5 +67,73 @@ func CreatePost(log *slog.Logger, queryTool storage.PostQueryFunctions) http.Han
 
 		w.WriteHeader(http.StatusOK)
 		render.JSON(w, r, utils.OK())
+	}
+}
+
+type ListPostResponse struct{
+	Response utils.Response `json:"response"`
+	Posts []storage.Post
+}
+
+
+func ListPostHandler(log *slog.Logger, queryTool storage.PostQueryFunctions) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log = slog.With(
+			slog.String("request_id", middleware.GetReqID(r.Context())),
+		)
+		
+		posts, err := queryTool.ListPost(context.Background())
+		if err != nil {
+			log.Error("query error on fetching posts", logger.Err(err))
+			
+			w.WriteHeader(http.StatusInternalServerError)
+			render.JSON(w, r, utils.Error("server error while fetchig data"))
+			return
+		}
+
+		render.JSON(w, r, ListPostResponse{
+			Response: utils.OK(),
+			Posts: posts,
+		})
+	}
+}
+
+
+type getPostResponse struct {
+	Response utils.Response `json:"response"`
+	Post *storage.Post `json:"post"`
+}
+
+
+func GetPostHandler(log *slog.Logger, queryTool storage.PostQueryFunctions) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log = slog.With(
+			slog.String("request_id", middleware.GetReqID(r.Context())),
+		)
+
+		id := chi.URLParam(r, "id")
+		int_id, err := strconv.Atoi(id)
+		if err != nil {
+			log.Error("id is not integer", logger.Err(err))
+
+			w.WriteHeader(http.StatusBadRequest)
+			render.JSON(w, r, utils.Error("validation error: id is not int"))
+			return
+		}
+
+		post, err := queryTool.GetPost(context.Background(), int_id)
+		if err != nil {
+			log.Error("query error on fetching post", logger.Err(err))
+			
+			w.WriteHeader(http.StatusInternalServerError)
+			render.JSON(w, r, utils.Error("server error while fetchig data"))
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		render.JSON(w, r, getPostResponse{
+			Response: utils.OK(),
+			Post: post,
+		})
 	}
 }

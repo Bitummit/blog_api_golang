@@ -4,10 +4,10 @@ import "context"
 
 
 type Post struct {
-	Id int64
-	Title string
-	Body string
-	Author string
+	Id int64 `json:"id"`
+	Title string `json:"title"`
+	Body string	`json:"body"`
+	Author string `json:"author"`
 }
 
 type PostQueryFunctions interface {

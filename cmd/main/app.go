@@ -5,6 +5,7 @@ import (
 	"blog_api/internal/storage/postgresql"
 	"blog_api/pkg/config"
 	"blog_api/pkg/logger"
+	"blog_api/pkg/utils"
 	"context"
 	"log/slog"
 	"net/http"
@@ -34,8 +35,13 @@ func main() {
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
+	router.Use(utils.SetJSONContentType)
 
-	router.Post("/post", post.CreatePost(log, storage))
+	router.Post("/post", post.CreatePostHandler(log, storage))
+	router.Get("/post", post.ListPostHandler(log, storage))
+	router.Get("/post/{id}", post.GetPostHandler(log, storage))
+
+
 
 	srv := &http.Server{
 		Addr: cfg.Address,
