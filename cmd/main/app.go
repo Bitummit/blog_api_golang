@@ -40,7 +40,11 @@ func main() {
 	router.Use(utils.SetJSONContentType)
 
 	router.Post("/post/", post.CreatePostHandler(log, storage))
-	router.Get("/post/", post.ListPostHandler(log, storage))
+	router.With(
+		utils.CheckTokenMiddleware(log),
+		).Get(
+			"/post/", post.ListPostHandler(log, storage),
+	)
 	router.Get("/post/{id}/", post.GetPostHandler(log, storage))
 	router.Delete("/post/{id}/", post.DeletePostHandler(log, storage))
 
