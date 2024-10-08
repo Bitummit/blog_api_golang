@@ -18,7 +18,7 @@ import (
 type CreatePostRequest struct{
 	Title string `json:"title" validate:"required"`
 	Body string `json:"body" validate:"required"`
-	Author string `json:"author" validate:"required"`
+	Author int64 `json:"author" validate:"required"`
 }
 
 
