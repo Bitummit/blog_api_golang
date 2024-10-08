@@ -39,7 +39,9 @@ func main() {
 	router.Use(middleware.URLFormat)
 	router.Use(utils.SetJSONContentType)
 
+
 	router.Get("/post/", post.ListPostHandler(log, storage))
+
 	router.Get("/post/{id}/", post.GetPostHandler(log, storage))
 
 	router.With(utils.CheckTokenMiddleware(log)).Post(
