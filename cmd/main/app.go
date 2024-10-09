@@ -1,17 +1,15 @@
 package main
 
 import (
-	"blog_api/internal/post"
-	"blog_api/internal/storage/postgresql"
-	"blog_api/pkg/config"
-	"blog_api/pkg/logger"
-	"blog_api/pkg/utils"
 	"context"
 	"log/slog"
-	"net/http"
+
+	"github.com/Bitummit/blog_api_golang/internal/api"
+	"github.com/Bitummit/blog_api_golang/internal/storage/postgresql"
+	"github.com/Bitummit/blog_api_golang/pkg/config"
+	"github.com/Bitummit/blog_api_golang/pkg/logger"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 )
 
 func main() {
@@ -32,37 +30,17 @@ func main() {
 
 	router := chi.NewRouter()
 
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.URLFormat)
-	router.Use(utils.SetJSONContentType)
-
-	router.Post("/post/", post.CreatePostHandler(log, storage))
-	router.With(
-		utils.CheckTokenMiddleware(log),
-		).Get(
-			"/post/", post.ListPostHandler(log, storage),
-	)
-	router.Get("/post/{id}/", post.GetPostHandler(log, storage))
-	router.Delete("/post/{id}/", post.DeletePostHandler(log, storage))
-
-
-	srv := &http.Server{
-		Addr: cfg.Address,
-		Handler: router,
-		ReadTimeout: cfg.Timeout,
-		WriteTimeout: cfg.Timeout,
+	server := api.HTTPServer{
+		Log: log,
+		Storage: storage,
+		Cfg: cfg,
+		Router: router,
 
 	}
-	log.Info("Starting server ...", slog.String("address", cfg.Address))
-
-	if err := srv.ListenAndServe(); err != nil {
-		log.Error("Can't start server", logger.Err(err))
+	if err := api.StartServer(&server); err != nil {
+		log.Error("Server error", logger.Err(err))
+		// Graceful shutdown
 	}
-
-	log.Info("Server stopped")
 
 }
 

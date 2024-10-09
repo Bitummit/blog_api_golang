@@ -1,4 +1,4 @@
-module blog_api
+module github.com/Bitummit/blog_api_golang
 
 go 1.23.1
 

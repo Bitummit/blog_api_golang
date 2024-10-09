@@ -1,7 +1,7 @@
 package postgresql
 
 import (
-	"blog_api/internal/storage"
+	"github.com/Bitummit/blog_api_golang/internal"
 	"context"
 	"os"
 	"time"
@@ -29,17 +29,7 @@ func InitDB(ctx context.Context) (*Storage, error) {
 }
 
 
-// get all posts
-// get post
-// create post (auth required)
-// delete post (auth required)
-
-// get author(future user, sign in)
-// create author (sign up)
-//	
-
-
-func (s *Storage) NewPost(ctx context.Context, post storage.Post) (int64, error) {
+func (s *Storage) NewPost(ctx context.Context, post internal.Post) (int64, error) {
 	query := `
 		INSERT INTO post(title, body, author) VALUES(@title, @body, @author) RETURNING id;
 	`
@@ -59,11 +49,11 @@ func (s *Storage) NewPost(ctx context.Context, post storage.Post) (int64, error)
 }
 
 
-func (s *Storage) ListPost(ctx context.Context) ([]storage.Post, error) {
+func (s *Storage) ListPost(ctx context.Context) ([]internal.Post, error) {
 	query := `
 		SELECT * FROM post;
 	`
-	var posts []storage.Post
+	var posts []internal.Post
 
 	rows, err := s.DB.Query(ctx, query)
 	if err != nil {
@@ -71,7 +61,7 @@ func (s *Storage) ListPost(ctx context.Context) ([]storage.Post, error) {
 	}
 
 	for rows.Next() {
-		var post storage.Post
+		var post internal.Post
 
 		err = rows.Scan(&post.Id, &post.Title, &post.Body, &post.Author)
 		if err != nil {
@@ -85,14 +75,14 @@ func (s *Storage) ListPost(ctx context.Context) ([]storage.Post, error) {
 }
 
 
-func (s *Storage) GetPost(ctx context.Context, id int) (*storage.Post, error) {
+func (s *Storage) GetPost(ctx context.Context, id int) (*internal.Post, error) {
 	query := `
 		SELECT * FROM post WHERE id=@id
 	`
 	args := pgx.NamedArgs{
 		"id": id,
 	}
-	var post storage.Post
+	var post internal.Post
 
 	err := s.DB.QueryRow(ctx, query, args).Scan(&post.Id, &post.Title, &post.Body, &post.Author)
 	if err != nil {

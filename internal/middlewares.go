@@ -1,7 +1,8 @@
-package utils
+package internal
 
 import (
-	"blog_api/pkg/logger"
+	"github.com/Bitummit/blog_api_golang/pkg/logger"
+	"github.com/Bitummit/blog_api_golang/pkg/utils"
 	"bytes"
 	"encoding/json"
 	"log/slog"
@@ -26,16 +27,15 @@ type CheckTokenResponse struct{
 
 func CheckTokenMiddleware(log *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-// func CheckTokenMiddleware(next http.Handler) http.Handler {
-
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request ) {
 			token := r.Header.Get("Authorization")
 			if token == "" {
 				log.Error("Token is empty")
 				w.WriteHeader(http.StatusInternalServerError)
-				render.JSON(w, r, Error("unauthorized"))
+				render.JSON(w, r, utils.Error("unauthorized"))
 				return
 			}
+			
 			postBody, _ := json.Marshal(map[string]string{
 				"token":  token,
 			})
@@ -44,7 +44,7 @@ func CheckTokenMiddleware(log *slog.Logger) func(http.Handler) http.Handler {
 			if err != nil {
 				log.Error("Error checking token", logger.Err(err))
 				w.WriteHeader(http.StatusInternalServerError)
-				render.JSON(w, r, Error("internal server error"))
+				render.JSON(w, r, utils.Error("internal server error"))
 				return
 			}
 
@@ -53,7 +53,7 @@ func CheckTokenMiddleware(log *slog.Logger) func(http.Handler) http.Handler {
 			if response.Status == "Error" {
 				log.Error("invalid token")
 				w.WriteHeader(http.StatusUnauthorized)
-				render.JSON(w, r, Error("invalid token"))
+				render.JSON(w, r, utils.Error("invalid token"))
 				return
 			} else {
 			next.ServeHTTP(w, r)

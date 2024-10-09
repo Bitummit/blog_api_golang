@@ -1,9 +1,9 @@
-package post
+package blogservice
 
 import (
-	"blog_api/internal/storage"
-	"blog_api/pkg/logger"
-	"blog_api/pkg/utils"
+	"github.com/Bitummit/blog_api_golang/internal"
+	"github.com/Bitummit/blog_api_golang/pkg/logger"
+	"github.com/Bitummit/blog_api_golang/pkg/utils"
 	"context"
 	"log/slog"
 	"net/http"
@@ -15,19 +15,21 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type CreatePostRequest struct{
-	Title string `json:"title" validate:"required"`
-	Body string `json:"body" validate:"required"`
-	Author int64 `json:"author" validate:"required"`
+
+type PostQueryFunctions interface {
+	NewPost(context.Context, internal.Post) (int64, error)
+	ListPost(context.Context) ([]internal.Post, error)
+	GetPost(context.Context, int) (*internal.Post, error)
+	DeletePost(context.Context, int) error
 }
 
 
-func CreatePostHandler(log *slog.Logger, queryTool storage.PostQueryFunctions) http.HandlerFunc {
+func CreatePostHandler(log *slog.Logger, queryTool PostQueryFunctions) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log = slog.With(
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
-		var req CreatePostRequest
+		var req internal.CreatePostRequest
 
 		err := render.DecodeJSON(r.Body, &req)
 		if err != nil {
@@ -46,7 +48,7 @@ func CreatePostHandler(log *slog.Logger, queryTool storage.PostQueryFunctions) h
 			render.JSON(w, r, utils.Error(validErr.Error()))
 			return
 		}
-		post := storage.Post{
+		post := internal.Post{
 			Title: req.Title,
 			Body: req.Body,
 			Author: req.Author,
@@ -66,13 +68,10 @@ func CreatePostHandler(log *slog.Logger, queryTool storage.PostQueryFunctions) h
 	}
 }
 
-type ListPostResponse struct{
-	Response utils.Response `json:"response"`
-	Posts []storage.Post
-}
 
 
-func ListPostHandler(log *slog.Logger, queryTool storage.PostQueryFunctions) http.HandlerFunc {
+
+func ListPostHandler(log *slog.Logger, queryTool PostQueryFunctions) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log = slog.With(
 			slog.String("request_id", middleware.GetReqID(r.Context())),
@@ -87,7 +86,7 @@ func ListPostHandler(log *slog.Logger, queryTool storage.PostQueryFunctions) htt
 			return
 		}
 
-		render.JSON(w, r, ListPostResponse{
+		render.JSON(w, r, internal.ListPostResponse{
 			Response: utils.OK(),
 			Posts: posts,
 		})
@@ -95,13 +94,10 @@ func ListPostHandler(log *slog.Logger, queryTool storage.PostQueryFunctions) htt
 }
 
 
-type getPostResponse struct {
-	Response utils.Response `json:"response"`
-	Post *storage.Post `json:"post"`
-}
 
 
-func GetPostHandler(log *slog.Logger, queryTool storage.PostQueryFunctions) http.HandlerFunc {
+
+func GetPostHandler(log *slog.Logger, queryTool PostQueryFunctions) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log = slog.With(
 			slog.String("request_id", middleware.GetReqID(r.Context())),
@@ -127,7 +123,7 @@ func GetPostHandler(log *slog.Logger, queryTool storage.PostQueryFunctions) http
 		}
 
 		w.WriteHeader(http.StatusOK)
-		render.JSON(w, r, getPostResponse{
+		render.JSON(w, r, internal.GetPostResponse{
 			Response: utils.OK(),
 			Post: post,
 		})
@@ -136,7 +132,7 @@ func GetPostHandler(log *slog.Logger, queryTool storage.PostQueryFunctions) http
 
 
 
-func DeletePostHandler(log *slog.Logger, queryTool storage.PostQueryFunctions) http.HandlerFunc {
+func DeletePostHandler(log *slog.Logger, queryTool PostQueryFunctions) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log = slog.With(
 			slog.String("request_id", middleware.GetReqID(r.Context())),
