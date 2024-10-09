@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/Bitummit/blog_api_golang/internal"
+	"github.com/Bitummit/blog_api_golang/internal/models"
 	"github.com/Bitummit/blog_api_golang/pkg/config"
 	"github.com/Bitummit/blog_api_golang/pkg/logger"
 	"github.com/Bitummit/blog_api_golang/pkg/utils"
@@ -18,9 +19,9 @@ import (
 
 
 type PostQueryFunctions interface {
-	NewPost(context.Context, internal.Post) (int64, error)
-	ListPost(context.Context) ([]internal.Post, error)
-	GetPost(context.Context, int) (*internal.Post, error)
+	NewPost(context.Context, models.Post) (int64, error)
+	ListPost(context.Context) ([]models.Post, error)
+	GetPost(context.Context, int) (*models.Post, error)
 	DeletePost(context.Context, int) error
 }
 
@@ -49,7 +50,6 @@ func StartServer(server *HTTPServer) error{
 	server.Router.Get("/post/{id}/", server.GetPostHandler)
 	server.Router.Delete("/post/{id}/", server.DeletePostHandler)
 
-
 	srv := &http.Server{
 		Addr: server.Cfg.Address,
 		Handler: server.Router,
@@ -74,8 +74,8 @@ func (s *HTTPServer) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		s.Log = slog.With(
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
-		var req internal.CreatePostRequest
 
+		var req CreatePostRequest
 		err := render.DecodeJSON(r.Body, &req)
 		if err != nil {
 			s.Log.Error("failed to decode request", logger.Err(err))
@@ -93,12 +93,12 @@ func (s *HTTPServer) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 			render.JSON(w, r, utils.Error(validErr.Error()))
 			return
 		}
-		post := internal.Post{
+
+		post := models.Post{
 			Title: req.Title,
 			Body: req.Body,
 			Author: req.Author,
 		}
-
 		id, err := s.Storage.NewPost(context.Background(), post)
 		if err != nil {
 			s.Log.Error("Error while adding new post", logger.Err(err))
@@ -127,7 +127,7 @@ func (s *HTTPServer) ListPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.JSON(w, r, internal.ListPostResponse{
+	render.JSON(w, r, ListPostResponse{
 		Response: utils.OK(),
 		Posts: posts,
 	})
@@ -159,7 +159,7 @@ func (s *HTTPServer) GetPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	render.JSON(w, r, internal.GetPostResponse{
+	render.JSON(w, r, GetPostResponse{
 		Response: utils.OK(),
 		Post: post,
 	})

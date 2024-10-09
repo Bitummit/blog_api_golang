@@ -1,10 +1,10 @@
 package postgresql
 
 import (
-	"github.com/Bitummit/blog_api_golang/internal"
 	"context"
 	"os"
 	"time"
+	"github.com/Bitummit/blog_api_golang/internal/models"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -29,7 +29,7 @@ func InitDB(ctx context.Context) (*Storage, error) {
 }
 
 
-func (s *Storage) NewPost(ctx context.Context, post internal.Post) (int64, error) {
+func (s *Storage) NewPost(ctx context.Context, post models.Post) (int64, error) {
 	query := `
 		INSERT INTO post(title, body, author) VALUES(@title, @body, @author) RETURNING id;
 	`
@@ -49,11 +49,11 @@ func (s *Storage) NewPost(ctx context.Context, post internal.Post) (int64, error
 }
 
 
-func (s *Storage) ListPost(ctx context.Context) ([]internal.Post, error) {
+func (s *Storage) ListPost(ctx context.Context) ([]models.Post, error) {
 	query := `
 		SELECT * FROM post;
 	`
-	var posts []internal.Post
+	var posts []models.Post
 
 	rows, err := s.DB.Query(ctx, query)
 	if err != nil {
@@ -61,7 +61,7 @@ func (s *Storage) ListPost(ctx context.Context) ([]internal.Post, error) {
 	}
 
 	for rows.Next() {
-		var post internal.Post
+		var post models.Post
 
 		err = rows.Scan(&post.Id, &post.Title, &post.Body, &post.Author)
 		if err != nil {
@@ -75,14 +75,14 @@ func (s *Storage) ListPost(ctx context.Context) ([]internal.Post, error) {
 }
 
 
-func (s *Storage) GetPost(ctx context.Context, id int) (*internal.Post, error) {
+func (s *Storage) GetPost(ctx context.Context, id int) (*models.Post, error) {
 	query := `
 		SELECT * FROM post WHERE id=@id
 	`
 	args := pgx.NamedArgs{
 		"id": id,
 	}
-	var post internal.Post
+	var post models.Post
 
 	err := s.DB.QueryRow(ctx, query, args).Scan(&post.Id, &post.Title, &post.Body, &post.Author)
 	if err != nil {

@@ -1,6 +1,7 @@
-package internal
+package api
 
 import (
+	"github.com/Bitummit/blog_api_golang/internal/models"
 	"github.com/Bitummit/blog_api_golang/pkg/utils"
 )
 
@@ -12,10 +13,10 @@ type CreatePostRequest struct{
 
 type ListPostResponse struct{
 	Response utils.Response `json:"response"`
-	Posts []Post
+	Posts []models.Post
 }
 
 type GetPostResponse struct {
 	Response utils.Response `json:"response"`
-	Post *Post `json:"post"`
+	Post *models.Post `json:"post"`
 }
