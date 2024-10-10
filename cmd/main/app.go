@@ -44,10 +44,6 @@ func main() {
 
 }
 
-// TODO: add author table and constraint to blog
 // TODO: filtering
 // TODO: sorting
 // TODO: pagination
-// TODO: add user table and microservice(gRPC)
-// TODO: jwt
-// TODO: middleware checking jwt

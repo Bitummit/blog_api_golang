@@ -1,6 +1,8 @@
 package api
 
 import (
+	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -35,6 +37,10 @@ type HTTPServer struct {
 
 func StartServer(server *HTTPServer) error{
 
+	ctx := context.Background()
+	ctx	, cancel := context.WithCancel(ctx) // TODO: make it useful
+	defer cancel()
+
 	server.Router.Use(middleware.RequestID)
 	server.Router.Use(middleware.RealIP)
 	server.Router.Use(middleware.Logger)
@@ -59,8 +65,7 @@ func StartServer(server *HTTPServer) error{
 	server.Log.Info("Starting server ...", slog.String("address", server.Cfg.Address))
 
 	if err := srv.ListenAndServe(); err != nil {
-		server.Log.Error("Can't start server", logger.Err(err))
-		return err
+		return fmt.Errorf("server stopped %v", err)
 	}
 
 	// Graceful shutdown
@@ -76,6 +81,8 @@ func (s *HTTPServer) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 
 		var req CreatePostRequest
 		err := render.DecodeJSON(r.Body, &req)
+		r.Body.Close()
+
 		if err != nil {
 			s.Log.Error("failed to decode request", logger.Err(err))
 			w.WriteHeader(http.StatusBadRequest)
