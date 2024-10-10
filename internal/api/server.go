@@ -1,12 +1,12 @@
 package api
 
 import (
-	"context"
 	"log/slog"
 	"net/http"
 	"strconv"
 
 	"github.com/Bitummit/blog_api_golang/internal"
+	blogservice "github.com/Bitummit/blog_api_golang/internal/blog_service"
 	"github.com/Bitummit/blog_api_golang/internal/models"
 	"github.com/Bitummit/blog_api_golang/pkg/config"
 	"github.com/Bitummit/blog_api_golang/pkg/logger"
@@ -17,18 +17,17 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-
-type PostQueryFunctions interface {
-	NewPost(context.Context, models.Post) (int64, error)
-	ListPost(context.Context) ([]models.Post, error)
-	GetPost(context.Context, int) (*models.Post, error)
-	DeletePost(context.Context, int) error
+type PostService interface {
+	CreatePostService(blogservice.PostQueryFunctions, models.Post) (int64, error)
+	ListPostService(blogservice.PostQueryFunctions)  ([]models.Post, error)
+	GetPostService(blogservice.PostQueryFunctions, int) (*models.Post, error)
+	DeletePostService(blogservice.PostQueryFunctions, int) error
 }
 
 
 type HTTPServer struct {
 	Log *slog.Logger
-	Storage PostQueryFunctions
+	Storage blogservice.PostQueryFunctions
 	Cfg *config.Config
 	Router chi.Router
 }
@@ -99,7 +98,7 @@ func (s *HTTPServer) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 			Body: req.Body,
 			Author: req.Author,
 		}
-		id, err := s.Storage.NewPost(context.Background(), post)
+		id, err := blogservice.CreatePostService(s.Storage, post)
 		if err != nil {
 			s.Log.Error("Error while adding new post", logger.Err(err))
 			w.WriteHeader(http.StatusInternalServerError)
@@ -118,7 +117,7 @@ func (s *HTTPServer) ListPostHandler(w http.ResponseWriter, r *http.Request) {
 		slog.String("request_id", middleware.GetReqID(r.Context())),
 	)
 	
-	posts, err := s.Storage.ListPost(context.Background())
+	posts, err := blogservice.ListPostService(s.Storage)
 	if err != nil {
 		s.Log.Error("query error on fetching posts", logger.Err(err))
 		
@@ -149,12 +148,12 @@ func (s *HTTPServer) GetPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	post, err := s.Storage.GetPost(context.Background(), int_id)
+	post, err := blogservice.GetPostService(s.Storage, int_id)
 	if err != nil {
 		s.Log.Error("query error on fetching post", logger.Err(err))
 		
 		w.WriteHeader(http.StatusInternalServerError)
-		render.JSON(w, r, utils.Error("server error while fetchig data"))
+		render.JSON(w, r, utils.Error("no such post"))
 		return
 	}
 
@@ -182,7 +181,7 @@ func (s *HTTPServer) DeletePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = s.Storage.DeletePost(context.Background(), int_id); err != nil {
+	if err = blogservice.DeletePostService(s.Storage, int_id); err != nil {
 		s.Log.Error("query error on deleting post", logger.Err(err))
 		
 		w.WriteHeader(http.StatusInternalServerError)

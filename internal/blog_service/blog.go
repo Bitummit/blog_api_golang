@@ -2,23 +2,56 @@ package blogservice
 
 import (
 	"context"
-	"log/slog"
 
-	"github.com/Bitummit/blog_api_golang/internal/api"
 	"github.com/Bitummit/blog_api_golang/internal/models"
-	"github.com/Bitummit/blog_api_golang/pkg/logger"
-	"github.com/Bitummit/blog_api_golang/pkg/utils"
 )
 
-// return http error code
-func ListPostService(log *slog.Logger, storage api.PostQueryFunctions) ( []models.Post, utils.Response) {
-	
-	posts, err := storage.ListPost(context.Background())
+type PostQueryFunctions interface {
+	NewPost(context.Context, models.Post) (int64, error)
+	ListPost(context.Context) ([]models.Post, error)
+	GetPost(context.Context, int) (*models.Post, error)
+	DeletePost(context.Context, int) error
+}
+
+
+func CreatePostService(storage PostQueryFunctions , post models.Post) (int64, error) {
+
+	id, err := storage.NewPost(context.Background(), post)
 	if err != nil {
-		log.Error("query error on fetching posts", logger.Err(err))
-		
-		return nil, utils.Error("server error")
+		return id, err
 	}
 
-    return posts, utils.OK()
+	return id, nil
+}
+
+
+func ListPostService(storage PostQueryFunctions) ( []models.Post, error) {
+	
+	posts, err := storage.ListPost(context.Background())
+	if err != nil {		
+		return nil, err
+	}
+
+    return posts, nil
+}
+
+
+func GetPostService(storage PostQueryFunctions, id int) (*models.Post, error){
+
+	post, err := storage.GetPost(context.Background(), id)
+	if err != nil {
+		return nil, err
+	}
+
+	return post, err
+}
+
+
+func DeletePostService(storage PostQueryFunctions, id int) error{
+
+	if err := storage.DeletePost(context.Background(), id); err != nil {
+		return err
+	} 
+	
+	return nil
 }

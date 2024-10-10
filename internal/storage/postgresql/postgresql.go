@@ -25,13 +25,17 @@ func InitDB(ctx context.Context) (*Storage, error) {
 		return nil, err
 	}
 
+	if err := connPool.Ping(context.Background()); err != nil {
+		return nil, err
+	}
+
 	return &Storage{DB: connPool}, nil
 }
 
 
 func (s *Storage) NewPost(ctx context.Context, post models.Post) (int64, error) {
 	query := `
-		INSERT INTO post(title, body, author) VALUES(@title, @body, @author) RETURNING id;
+		INSERT INTO post(title, body, author_id) VALUES(@title, @body, @author) RETURNING id;
 	`
 	args := pgx.NamedArgs{
 		"title": post.Title,

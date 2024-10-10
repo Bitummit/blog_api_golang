@@ -21,7 +21,7 @@ func main() {
 	log.Info("Connecting database ...")
 	storage, err := postgresql.InitDB(context.TODO())
 	if err != nil {
-		log.Error("Error connection datsbase", logger.Err(err))
+		log.Error("Error connection database", logger.Err(err))
 		return
 	}
 	defer storage.DB.Close()
