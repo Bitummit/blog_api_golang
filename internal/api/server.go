@@ -10,6 +10,9 @@ import (
 	"github.com/Bitummit/blog_api_golang/internal"
 	blogservice "github.com/Bitummit/blog_api_golang/internal/blog_service"
 	"github.com/Bitummit/blog_api_golang/internal/models"
+
+	// authclient "github.com/Bitummit/blog_api_golang/pkg/auth_client"
+	authclient "github.com/Bitummit/blog_api_golang/pkg/auth_client"
 	"github.com/Bitummit/blog_api_golang/pkg/config"
 	"github.com/Bitummit/blog_api_golang/pkg/logger"
 	"github.com/Bitummit/blog_api_golang/pkg/utils"
@@ -38,7 +41,7 @@ type HTTPServer struct {
 func StartServer(server *HTTPServer) error{
 
 	ctx := context.Background()
-	ctx	, cancel := context.WithCancel(ctx) // TODO: make it useful
+	ctx, cancel := context.WithCancel(ctx) // TODO: make it useful
 	defer cancel()
 
 	server.Router.Use(middleware.RequestID)
@@ -123,7 +126,7 @@ func (s *HTTPServer) ListPostHandler(w http.ResponseWriter, r *http.Request) {
 	s.Log = slog.With(
 		slog.String("request_id", middleware.GetReqID(r.Context())),
 	)
-	
+
 	posts, err := blogservice.ListPostService(s.Storage)
 	if err != nil {
 		s.Log.Error("query error on fetching posts", logger.Err(err))
@@ -144,6 +147,38 @@ func (s *HTTPServer) GetPostHandler(w http.ResponseWriter, r *http.Request) {
 	s.Log = slog.With(
 		slog.String("request_id", middleware.GetReqID(r.Context())),
 	)
+
+
+	client, err := authclient.NewClient(s.Log, s.Cfg)
+	if err != nil {
+		s.Log.Error("Error startin grpc auth client", logger.Err(err))
+
+		w.WriteHeader(http.StatusInternalServerError)
+		render.JSON(w, r, utils.Error("auth disabled"))
+		return
+	}
+
+	_ = client.Login("Pertaya", "1234")
+	defer client.Conn.Close()
+	s.Log.Info("Success")
+	
+	// conn, err := grpc.NewClient("localhost:5300", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	// if err != nil {
+	// 	s.Log.Error("Error", logger.Err(err))
+	// }
+
+	// client := auth_v1.NewAuthClient(conn)
+
+	// request := &auth_v1.BaseUserInformation {
+	// 	Username: "Pertaya",
+	// 	Password: "1234",
+	// }
+
+	// token, err := client.Login(context.Background(), request)
+	// if err != nil {
+	// 	s.Log.Error("Error request", logger.Err(err))
+	// }
+	// s.Log.Info("Success", token)
 
 	id := chi.URLParam(r, "id")
 	int_id, err := strconv.Atoi(id)
