@@ -16,7 +16,7 @@ type PostQueryFunctions interface {
 
 
 func CreatePostService(storage PostQueryFunctions , post models.Post) (int64, error) {
-
+	
 	id, err := storage.NewPost(context.Background(), post)
 	if err != nil {
 		return id, fmt.Errorf("insertion error %v", err)
@@ -27,7 +27,6 @@ func CreatePostService(storage PostQueryFunctions , post models.Post) (int64, er
 
 
 func ListPostService(storage PostQueryFunctions) ( []models.Post, error) {
-	
 	posts, err := storage.ListPost(context.Background())
 	if err != nil {		
 		return nil, fmt.Errorf("query error %v", err)
