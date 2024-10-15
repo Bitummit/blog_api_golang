@@ -1,11 +1,12 @@
 package internal
 
 import (
+	"log/slog"
+
+	authclient "github.com/Bitummit/blog_api_golang/pkg/auth_client"
+	"github.com/Bitummit/blog_api_golang/pkg/config"
 	"github.com/Bitummit/blog_api_golang/pkg/logger"
 	"github.com/Bitummit/blog_api_golang/pkg/utils"
-	"bytes"
-	"encoding/json"
-	"log/slog"
 
 	"net/http"
 
@@ -31,32 +32,27 @@ func CheckTokenMiddleware(log *slog.Logger) func(http.Handler) http.Handler {
 			token := r.Header.Get("Authorization")
 			if token == "" {
 				log.Error("Token is empty")
-				w.WriteHeader(http.StatusInternalServerError)
+				w.WriteHeader(http.StatusUnauthorized)
 				render.JSON(w, r, utils.Error("unauthorized"))
 				return
 			}
 			
-			postBody, _ := json.Marshal(map[string]string{
-				"token":  token,
-			})
-			bodyBytes := bytes.NewBuffer(postBody)
-			resp, err := http.Post("http://localhost:8001/token/", "application/json", bodyBytes)
+			client, err := authclient.NewClient(log, config.NewConfig())
 			if err != nil {
-				log.Error("Error checking token", logger.Err(err))
-				w.WriteHeader(http.StatusInternalServerError)
-				render.JSON(w, r, utils.Error("internal server error"))
+				log.Error("Error starting grpc auth client", logger.Err(err))
 				return
 			}
 
-			var response CheckTokenResponse
-			_ = render.DecodeJSON(resp.Body, &response)
-			if response.Status == "Error" {
+			response, err := client.CheckToken(token)
+			defer client.Conn.Close()
+			if err != nil || response.Status != "OK" {
 				log.Error("invalid token")
-				w.WriteHeader(http.StatusUnauthorized)
+				w.WriteHeader(http.StatusInternalServerError)
 				render.JSON(w, r, utils.Error("invalid token"))
 				return
 			} else {
-			next.ServeHTTP(w, r)
+				log.Info("Valid token")
+				next.ServeHTTP(w, r)
 			}
 		})
 	}

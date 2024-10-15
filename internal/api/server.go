@@ -12,7 +12,6 @@ import (
 	"github.com/Bitummit/blog_api_golang/internal/models"
 
 	// authclient "github.com/Bitummit/blog_api_golang/pkg/auth_client"
-	authclient "github.com/Bitummit/blog_api_golang/pkg/auth_client"
 	"github.com/Bitummit/blog_api_golang/pkg/config"
 	"github.com/Bitummit/blog_api_golang/pkg/logger"
 	"github.com/Bitummit/blog_api_golang/pkg/utils"
@@ -148,19 +147,18 @@ func (s *HTTPServer) GetPostHandler(w http.ResponseWriter, r *http.Request) {
 		slog.String("request_id", middleware.GetReqID(r.Context())),
 	)
 
+	// client, err := authclient.NewClient(s.Log, s.Cfg)
+	// if err != nil {
+	// 	s.Log.Error("Error startin grpc auth client", logger.Err(err))
 
-	client, err := authclient.NewClient(s.Log, s.Cfg)
-	if err != nil {
-		s.Log.Error("Error startin grpc auth client", logger.Err(err))
+	// 	w.WriteHeader(http.StatusInternalServerError)
+	// 	render.JSON(w, r, utils.Error("auth disabled"))
+	// 	return
+	// }
 
-		w.WriteHeader(http.StatusInternalServerError)
-		render.JSON(w, r, utils.Error("auth disabled"))
-		return
-	}
-
-	_ = client.Login("Pertaya", "1234")
-	defer client.Conn.Close()
-	s.Log.Info("Success")
+	// _ = client.Login("Pertaya", "1234")
+	// defer client.Conn.Close()
+	// s.Log.Info("Success")
 	
 	// conn, err := grpc.NewClient("localhost:5300", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	// if err != nil {
