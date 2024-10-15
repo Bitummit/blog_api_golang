@@ -11,7 +11,6 @@ import (
 	blogservice "github.com/Bitummit/blog_api_golang/internal/blog_service"
 	"github.com/Bitummit/blog_api_golang/internal/models"
 
-	// authclient "github.com/Bitummit/blog_api_golang/pkg/auth_client"
 	"github.com/Bitummit/blog_api_golang/pkg/config"
 	"github.com/Bitummit/blog_api_golang/pkg/logger"
 	"github.com/Bitummit/blog_api_golang/pkg/utils"
@@ -57,6 +56,8 @@ func StartServer(server *HTTPServer) error{
 	server.Router.Get("/post/{id}/", server.GetPostHandler)
 	server.Router.Delete("/post/{id}/", server.DeletePostHandler)
 
+	server.Router.Post("/login/", server.LoginHandler)
+
 	srv := &http.Server{
 		Addr: server.Cfg.Address,
 		Handler: server.Router,
@@ -77,47 +78,47 @@ func StartServer(server *HTTPServer) error{
 
 
 func (s *HTTPServer) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
-		s.Log = slog.With(
-			slog.String("request_id", middleware.GetReqID(r.Context())),
-		)
+	s.Log = slog.With(
+		slog.String("request_id", middleware.GetReqID(r.Context())),
+	)
 
-		var req CreatePostRequest
-		err := render.DecodeJSON(r.Body, &req)
-		r.Body.Close()
+	var req CreatePostRequest
+	err := render.DecodeJSON(r.Body, &req)
+	r.Body.Close()
 
-		if err != nil {
-			s.Log.Error("failed to decode request", logger.Err(err))
-			w.WriteHeader(http.StatusBadRequest)
-			render.JSON(w, r, utils.Error("error decoding request"))
-			return
-		}
+	if err != nil {
+		s.Log.Error("failed to decode request", logger.Err(err))
+		w.WriteHeader(http.StatusBadRequest)
+		render.JSON(w, r, utils.Error("error decoding request"))
+		return
+	}
 
-		if err := validator.New().Struct(req); err != nil {
-			validErr := err.(validator.ValidationErrors)
+	if err := validator.New().Struct(req); err != nil {
+		validErr := err.(validator.ValidationErrors)
 
-			s.Log.Error("Validate error", logger.Err(validErr))
+		s.Log.Error("Validate error", logger.Err(validErr))
 
-			w.WriteHeader(http.StatusBadRequest)
-			render.JSON(w, r, utils.Error(validErr.Error()))
-			return
-		}
+		w.WriteHeader(http.StatusBadRequest)
+		render.JSON(w, r, utils.Error(validErr.Error()))
+		return
+	}
 
-		post := models.Post{
-			Title: req.Title,
-			Body: req.Body,
-			Author: req.Author,
-		}
-		id, err := blogservice.CreatePostService(s.Storage, post)
-		if err != nil {
-			s.Log.Error("Error while adding new post", logger.Err(err))
-			w.WriteHeader(http.StatusInternalServerError)
-			render.JSON(w, r, utils.Error("db error"))
-			return
-		}
-		s.Log.Info("Inserted post", slog.Int64("id", int64(id)))
+	post := models.Post{
+		Title: req.Title,
+		Body: req.Body,
+		Author: req.Author,
+	}
+	id, err := blogservice.CreatePostService(s.Storage, post)
+	if err != nil {
+		s.Log.Error("Error while adding new post", logger.Err(err))
+		w.WriteHeader(http.StatusInternalServerError)
+		render.JSON(w, r, utils.Error("db error"))
+		return
+	}
+	s.Log.Info("Inserted post", slog.Int64("id", int64(id)))
 
-		w.WriteHeader(http.StatusOK)
-		render.JSON(w, r, utils.OK())
+	w.WriteHeader(http.StatusOK)
+	render.JSON(w, r, utils.OK())
 }
 
 
@@ -146,37 +147,6 @@ func (s *HTTPServer) GetPostHandler(w http.ResponseWriter, r *http.Request) {
 	s.Log = slog.With(
 		slog.String("request_id", middleware.GetReqID(r.Context())),
 	)
-
-	// client, err := authclient.NewClient(s.Log, s.Cfg)
-	// if err != nil {
-	// 	s.Log.Error("Error startin grpc auth client", logger.Err(err))
-
-	// 	w.WriteHeader(http.StatusInternalServerError)
-	// 	render.JSON(w, r, utils.Error("auth disabled"))
-	// 	return
-	// }
-
-	// _ = client.Login("Pertaya", "1234")
-	// defer client.Conn.Close()
-	// s.Log.Info("Success")
-	
-	// conn, err := grpc.NewClient("localhost:5300", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	// if err != nil {
-	// 	s.Log.Error("Error", logger.Err(err))
-	// }
-
-	// client := auth_v1.NewAuthClient(conn)
-
-	// request := &auth_v1.BaseUserInformation {
-	// 	Username: "Pertaya",
-	// 	Password: "1234",
-	// }
-
-	// token, err := client.Login(context.Background(), request)
-	// if err != nil {
-	// 	s.Log.Error("Error request", logger.Err(err))
-	// }
-	// s.Log.Info("Success", token)
 
 	id := chi.URLParam(r, "id")
 	int_id, err := strconv.Atoi(id)
@@ -231,4 +201,55 @@ func (s *HTTPServer) DeletePostHandler(w http.ResponseWriter, r *http.Request) {
 	
 	w.WriteHeader(http.StatusOK)
 	render.JSON(w, r, utils.OK())
+}
+
+
+func (s *HTTPServer) LoginHandler(w http.ResponseWriter, r *http.Request) {
+	s.Log = slog.With(
+		slog.String("request_id", middleware.GetReqID(r.Context())),
+	)
+
+	var req LoginRequest
+	err := render.DecodeJSON(r.Body, &req)
+	r.Body.Close()
+	if err != nil {
+		s.Log.Error("failed to decode request", logger.Err(err))
+		w.WriteHeader(http.StatusBadRequest)
+		render.JSON(w, r, utils.Error("error decoding request"))
+		return
+	}
+
+	if err := validator.New().Struct(req); err != nil {
+		validErr := err.(validator.ValidationErrors)
+
+		s.Log.Error("Validate error", logger.Err(validErr))
+
+		w.WriteHeader(http.StatusBadRequest)
+		render.JSON(w, r, utils.Error(validErr.Error()))
+		return
+	}
+
+	user := models.User{
+		Username: req.Username,
+		Password: req.Password,
+	}
+	token, err := blogservice.LoginService(s.Storage, s.Log, user)
+	if err != nil {
+
+		// *handle different error types!*
+
+		s.Log.Error("Error while loggining", logger.Err(err))
+		w.WriteHeader(http.StatusBadRequest)
+		render.JSON(w, r, utils.Error("server error"))
+		return
+	}
+
+	resp := LoginResponse{
+		Response: utils.OK(),
+		Token: *token,
+	}
+
+	w.WriteHeader(http.StatusOK)
+	render.JSON(w, r, resp)
+
 }

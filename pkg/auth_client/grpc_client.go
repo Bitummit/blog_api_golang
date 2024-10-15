@@ -9,6 +9,7 @@ import (
 	"github.com/Bitummit/blog_api_golang/pkg/config"
 	"github.com/Bitummit/blog_api_golang/pkg/logger"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type AuthClient struct {
@@ -27,6 +28,7 @@ func NewClient(log *slog.Logger, cfg *config.Config) (*AuthClient, error) {
 	}
 
 	opts := []grpc.DialOption{
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
 	
 	conn, err := grpc.NewClient("127.0.0.1:5300", opts...)
@@ -49,7 +51,7 @@ func (a *AuthClient) CheckToken(token string) (*auth_v1.Response, error) {
 	response, err := a.Client.CheckToken(context.Background(), request)
 	if err != nil {
 		a.Log.Error("fail to dial: %v", logger.Err(err))
-		return nil, fmt.Errorf("auth service error: %v", err)
+		return nil, err
 	}
 	// return response object or string?
 	return response, nil
@@ -64,7 +66,8 @@ func (a *AuthClient) Login(username string, password string) (*auth_v1.Token, er
 	token, err := a.Client.Login(context.Background(), request)
 	if err != nil {
 		a.Log.Error("fail to dial: %v", logger.Err(err))
-		return nil, fmt.Errorf("auth service error: %v", err)
+		// return nil, fmt.Errorf("auth service error: %v", err)
+		return nil, err
 	}
 	// return Token object or string?
 	return token, nil
