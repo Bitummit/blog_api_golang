@@ -14,3 +14,9 @@ type Author struct {
 	LastName int64 		`json:"last_name"`
 	Age int64 			`json:"age"`
 }
+
+type User struct {
+	Id int64 			`json:"id"`
+	Username string 	`json:"username"`
+	Password string		`json:"password"`
+}
