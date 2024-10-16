@@ -6,7 +6,8 @@ import (
 	"log/slog"
 
 	"github.com/Bitummit/blog_api_golang/internal/models"
-	authclient "github.com/Bitummit/blog_api_golang/pkg/auth_client"
+	authclient "github.com/Bitummit/go_auth/pkg/auth_client"
+	grpcConfig "github.com/Bitummit/go_auth/pkg/config"
 )
 
 type PostQueryFunctions interface {
@@ -61,7 +62,7 @@ func DeletePostService(storage PostQueryFunctions, id int) error{
 
 func LoginService(storage PostQueryFunctions, log *slog.Logger, user models.User) (*string, error){
 
-	client, err := authclient.NewClient(log, nil)
+	client, err := authclient.NewClient(log, grpcConfig.InitConfig())
 	if err != nil {
 		return nil, err
 	}

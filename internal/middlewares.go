@@ -3,8 +3,8 @@ package internal
 import (
 	"log/slog"
 
-	authclient "github.com/Bitummit/blog_api_golang/pkg/auth_client"
-	"github.com/Bitummit/blog_api_golang/pkg/config"
+	authclient "github.com/Bitummit/go_auth/pkg/auth_client"
+	grpcConfig "github.com/Bitummit/go_auth/pkg/config"
 	"github.com/Bitummit/blog_api_golang/pkg/logger"
 	"github.com/Bitummit/blog_api_golang/pkg/utils"
 
@@ -37,7 +37,7 @@ func CheckTokenMiddleware(log *slog.Logger) func(http.Handler) http.Handler {
 				return
 			}
 			
-			client, err := authclient.NewClient(log, config.NewConfig())
+			client, err := authclient.NewClient(log, grpcConfig.InitConfig())
 			if err != nil {
 				log.Error("Error starting grpc auth client", logger.Err(err))
 				return
