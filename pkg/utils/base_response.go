@@ -1,8 +1,12 @@
 package utils
 
+import (
+	_ "github.com/Bitummit/blog_api_golang/docs"
+
+)
 
 type Response struct {
-	Status string `json:"status"`
+	Status string `json:"status" expanple:"OK"`
 	Error string `json:"error,omitempty"`
 }
 

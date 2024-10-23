@@ -62,14 +62,14 @@ func DeletePostService(storage PostQueryFunctions, id int) error{
 
 func LoginService(storage PostQueryFunctions, log *slog.Logger, user models.User) (*string, error){
 
-	client, err := authclient.NewClient(log, grpcConfig.InitConfig())
+	client, err := authclient.New(log, grpcConfig.InitConfig())
 	if err != nil {
 		return nil, err
 	}
-	token, err := client.Login(user.Username, user.Password)
+	response, err := client.Login(user.Username, user.Password)
 	if err != nil {
 		return nil, err
 	}
 	
-	return &token.Token, nil
+	return &response.Token, nil
 }

@@ -1,10 +1,20 @@
 package models
 
+import (
+	_ "github.com/Bitummit/blog_api_golang/docs"
+
+)
+
+//
 type Post struct {
-	Id int64 		`json:"id"`
-	Title string 	`json:"title"`
-	Body string		`json:"body"`
-	Author int64 	`json:"author"`
+	// The UUID of a post
+	Id int64 		`json:"id" example:"345"`
+	// Post title
+	Title string 	`json:"title" example:"first post"`
+	// Post text
+	Body string		`json:"body" example:"this is my first psot and ..."`
+	// Post author
+	Author int64 	`json:"author" example:"234"`
 }
 
 type Author struct {

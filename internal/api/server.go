@@ -18,6 +18,9 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 	"github.com/go-playground/validator/v10"
+	httpSwagger "github.com/swaggo/http-swagger"
+	_ "github.com/Bitummit/blog_api_golang/docs"
+
 )
 
 type PostService interface {
@@ -35,7 +38,7 @@ type HTTPServer struct {
 	Router chi.Router
 }
 
-
+//        swag init -d "./" -g "$FOLDER_NAME/main.go"
 func StartServer(server *HTTPServer) error{
 
 	ctx := context.Background()
@@ -58,6 +61,9 @@ func StartServer(server *HTTPServer) error{
 
 	server.Router.Post("/login/", server.LoginHandler)
 
+	server.Router.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8000/swagger/doc.json"), //The url pointing to API definition
+	))
 	srv := &http.Server{
 		Addr: server.Cfg.Address,
 		Handler: server.Router,
@@ -143,6 +149,17 @@ func (s *HTTPServer) ListPostHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 
+// GetPost godoc
+// @Summary      Getting post instance
+// @Description  getting post instance
+// @Tags         posts
+// @Accept       json
+// @Produce      json
+// @Param        id   path      int  true  "Post ID"
+// @Success      200  {object}  models.Post
+// @Failure      404  {object}  utils.Response
+// @Failure      500  {object}  utils.Response
+// @Router       /post/{id}/ [get]
 func (s *HTTPServer) GetPostHandler(w http.ResponseWriter, r *http.Request) {
 	s.Log = slog.With(
 		slog.String("request_id", middleware.GetReqID(r.Context())),
@@ -240,7 +257,7 @@ func (s *HTTPServer) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 		s.Log.Error("Error while loggining", logger.Err(err))
 		w.WriteHeader(http.StatusBadRequest)
-		render.JSON(w, r, utils.Error("server error"))
+		render.JSON(w, r, utils.Error(err.Error()))
 		return
 	}
 

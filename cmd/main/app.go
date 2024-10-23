@@ -9,10 +9,22 @@ import (
 
 	"github.com/Bitummit/blog_api_golang/pkg/config"
 	"github.com/Bitummit/blog_api_golang/pkg/logger"
-
+	_ "github.com/Bitummit/blog_api_golang/docs"
 	"github.com/go-chi/chi/v5"
 )
 
+
+//	@title			Go Blog API
+//	@version		1.0
+//	@description	This is a sample API blog service.
+
+
+//	@securityDefinitions.apikey	ApiKeyAuth
+//	@in							header
+//	@name						JWT
+
+//	@host		localhost:8000
+//	@BasePath	/
 func main() {
 	cfg := config.NewConfig()
 
