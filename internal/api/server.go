@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	blogservice "github.com/Bitummit/blog_api_golang/internal/blog_service"
 	"github.com/Bitummit/blog_api_golang/internal/models"
 
+	_ "github.com/Bitummit/blog_api_golang/docs"
 	"github.com/Bitummit/blog_api_golang/pkg/config"
 	"github.com/Bitummit/blog_api_golang/pkg/logger"
 	"github.com/Bitummit/blog_api_golang/pkg/utils"
@@ -19,8 +21,6 @@ import (
 	"github.com/go-chi/render"
 	"github.com/go-playground/validator/v10"
 	httpSwagger "github.com/swaggo/http-swagger"
-	_ "github.com/Bitummit/blog_api_golang/docs"
-
 )
 
 type PostService interface {
@@ -36,14 +36,17 @@ type HTTPServer struct {
 	Storage blogservice.PostQueryFunctions
 	Cfg *config.Config
 	Router chi.Router
+	Kafka blogservice.KafkaService
 }
 
-//        swag init -d "./" -g "$FOLDER_NAME/main.go"
+
 func StartServer(server *HTTPServer) error{
 
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx) // TODO: make it useful
 	defer cancel()
+
+	server.Kafka = blogservice.NewKafka(server.Log)
 
 	server.Router.Use(middleware.RequestID)
 	server.Router.Use(middleware.RealIP)
@@ -91,7 +94,6 @@ func (s *HTTPServer) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	var req CreatePostRequest
 	err := render.DecodeJSON(r.Body, &req)
 	r.Body.Close()
-
 	if err != nil {
 		s.Log.Error("failed to decode request", logger.Err(err))
 		w.WriteHeader(http.StatusBadRequest)
@@ -114,6 +116,20 @@ func (s *HTTPServer) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		Body: req.Body,
 		Author: req.Author,
 	}
+
+	postInBytes, err := json.Marshal(post)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		render.JSON(w, r, utils.Error("server error"))
+		return
+	}
+	err = s.Kafka.PushPostToQueue("new_posts", postInBytes)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		render.JSON(w, r, utils.Error("server error"))
+		return
+	}
+	
 	id, err := blogservice.CreatePostService(s.Storage, post)
 	if err != nil {
 		s.Log.Error("Error while adding new post", logger.Err(err))
