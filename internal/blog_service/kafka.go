@@ -35,7 +35,7 @@ func (k *KafkaService)ConnectConsumer(brokers []string) (sarama.Consumer, error)
 }
 
 
-func (k *KafkaService)PushPostToQueue(topic string, message []byte) error {
+func (k *KafkaService)PushPostToQueue(message []byte) error {
 	brokers := []string {"localhost:9092"}
 
 	// Connect to producer
@@ -48,15 +48,18 @@ func (k *KafkaService)PushPostToQueue(topic string, message []byte) error {
 
 	// New message
 	msg := &sarama.ProducerMessage{
-		Topic: topic,
+		Topic: "emails",
+		Key: sarama.StringEncoder("Test"),
 		Value: sarama.StringEncoder(message),
 	}
 
 	// Send message
-	_, _, err = producer.SendMessage(msg)
+	slog.Info("Sending message to queue")
+	partition, _, err := producer.SendMessage(msg)
 	if err != nil {
 		return err
 	}
+	slog.Info("Message sended", partition)
 	// k.log.Info("Post stored in ", 
 	// 	slog.String("topic", topic), 
 	// 	slog.Int("partition", partition), 

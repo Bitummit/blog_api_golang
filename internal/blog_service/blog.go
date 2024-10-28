@@ -73,3 +73,17 @@ func LoginService(storage PostQueryFunctions, log *slog.Logger, user models.User
 	
 	return &response.Token, nil
 }
+
+func RegisterService(storage PostQueryFunctions, log *slog.Logger, user models.User) (*string, error){
+
+	client, err := authclient.New(log, grpcConfig.InitConfig())
+	if err != nil {
+		return nil, err
+	}
+	response, err := client.Register(user.Username, user.Email, user.Password)
+	if err != nil {
+		return nil, err
+	}
+	
+	return &response.Token, nil
+}

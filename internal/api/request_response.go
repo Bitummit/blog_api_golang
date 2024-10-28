@@ -16,6 +16,17 @@ type LoginRequest struct{
 	Password string `json:"password" validate:"required"`
 }
 
+type RegisterRequest struct{
+	Username string `json:"username" validate:"required"`
+	Email string	`json:"email" validate:"required"`
+	Password string `json:"password" validate:"required"`
+}
+
+type RegisterResponse struct{
+	Response utils.Response `json:"response"`
+	Token string 			`json:"token"`
+}
+
 type LoginResponse struct{
 	Response utils.Response `json:"response"`
 	Token string 			`json:"token"`

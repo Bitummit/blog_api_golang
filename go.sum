@@ -4,6 +4,10 @@ github.com/Bitummit/go_auth v0.0.0-20241015132459-5112e140098f h1:NXWGnQCF3cOuX4
 github.com/Bitummit/go_auth v0.0.0-20241015132459-5112e140098f/go.mod h1:xKQMW/LzsL082ygcgxQnELuTK/FeMwjvWR/hmXdYPe4=
 github.com/Bitummit/go_auth v0.0.0-20241018201139-8c1b9fed69e3 h1:DVNscYgitTDy/pAuONYpWMK594gz+eDP6rlME7d6xpk=
 github.com/Bitummit/go_auth v0.0.0-20241018201139-8c1b9fed69e3/go.mod h1:xKQMW/LzsL082ygcgxQnELuTK/FeMwjvWR/hmXdYPe4=
+github.com/Bitummit/go_auth v0.0.0-20241028083155-125e31f3c461 h1:n0qgHfxt85Rrz0h0fiF9hrwOqtKRRn2994oMMecPyFc=
+github.com/Bitummit/go_auth v0.0.0-20241028083155-125e31f3c461/go.mod h1:jz2+MzoU/i5iixoI6KPS/VmHz8GbMTrJQhJnN7oRn9A=
+github.com/Bitummit/go_auth v0.0.0-20241028101454-2cda0d30c9ec h1:+G7vg4L5A6+MYnkQWYiJo4L+EARgl/T0iIR7ulwnVBE=
+github.com/Bitummit/go_auth v0.0.0-20241028101454-2cda0d30c9ec/go.mod h1:t7dHkkGAkZW5eQDMmMfKX9MZ0+cCegjNnF48lmzMaAQ=
 github.com/BurntSushi/toml v1.2.1/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
 github.com/BurntSushi/toml v1.4.0 h1:kuoIxZQy2WRRk1pttg9asf+WVv6tWQuBNVmK8+nqPr0=
 github.com/BurntSushi/toml v1.4.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=

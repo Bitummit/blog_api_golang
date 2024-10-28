@@ -13,7 +13,7 @@ require (
 )
 
 require (
-	github.com/Bitummit/go_auth v0.0.0-20241018201139-8c1b9fed69e3 // indirect
+	github.com/Bitummit/go_auth v0.0.0-20241028101454-2cda0d30c9ec // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/IBM/sarama v1.43.3 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect

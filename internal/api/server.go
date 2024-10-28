@@ -63,6 +63,8 @@ func StartServer(server *HTTPServer) error{
 	server.Router.Delete("/post/{id}/", server.DeletePostHandler)
 
 	server.Router.Post("/login/", server.LoginHandler)
+	server.Router.Post("/register/", server.RegisterHandler)
+
 
 	server.Router.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("http://localhost:8000/swagger/doc.json"), //The url pointing to API definition
@@ -123,7 +125,7 @@ func (s *HTTPServer) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		render.JSON(w, r, utils.Error("server error"))
 		return
 	}
-	err = s.Kafka.PushPostToQueue("new_posts", postInBytes)
+	err = s.Kafka.PushPostToQueue(postInBytes)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		render.JSON(w, r, utils.Error("server error"))
@@ -267,6 +269,58 @@ func (s *HTTPServer) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		Password: req.Password,
 	}
 	token, err := blogservice.LoginService(s.Storage, s.Log, user)
+	if err != nil {
+
+		// *handle different error types!*
+
+		s.Log.Error("Error while loggining", logger.Err(err))
+		w.WriteHeader(http.StatusBadRequest)
+		render.JSON(w, r, utils.Error(err.Error()))
+		return
+	}
+
+	resp := LoginResponse{
+		Response: utils.OK(),
+		Token: *token,
+	}
+
+	w.WriteHeader(http.StatusOK)
+	render.JSON(w, r, resp)
+
+}
+
+func (s *HTTPServer) RegisterHandler(w http.ResponseWriter, r *http.Request) {
+	s.Log = slog.With(
+		slog.String("request_id", middleware.GetReqID(r.Context())),
+	)
+
+	var req RegisterRequest
+	err := render.DecodeJSON(r.Body, &req)
+	r.Body.Close()
+	if err != nil {
+		s.Log.Error("failed to decode request", logger.Err(err))
+		w.WriteHeader(http.StatusBadRequest)
+		render.JSON(w, r, utils.Error("error decoding request"))
+		return
+	}
+
+	if err := validator.New().Struct(req); err != nil {
+		validErr := err.(validator.ValidationErrors)
+
+		s.Log.Error("Validate error", logger.Err(validErr))
+
+		w.WriteHeader(http.StatusBadRequest)
+		render.JSON(w, r, utils.Error(validErr.Error()))
+		return
+	}
+
+	user := models.User{
+		Username: req.Username,
+		Email: req.Email,
+		Password: req.Password,
+	}
+
+	token, err := blogservice.RegisterService(s.Storage, s.Log, user)
 	if err != nil {
 
 		// *handle different error types!*
