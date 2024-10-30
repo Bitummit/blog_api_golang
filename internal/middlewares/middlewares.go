@@ -1,4 +1,4 @@
-package internal
+package middlewares
 
 import (
 	"log/slog"

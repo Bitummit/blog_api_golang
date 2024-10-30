@@ -1,4 +1,4 @@
-package api
+package server
 
 import (
 	"context"
@@ -8,8 +8,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Bitummit/blog_api_golang/internal"
+	my_kafka "github.com/Bitummit/blog_api_golang/internal/api/kafka"
 	blogservice "github.com/Bitummit/blog_api_golang/internal/blog_service"
+	"github.com/Bitummit/blog_api_golang/internal/middlewares"
 	"github.com/Bitummit/blog_api_golang/internal/models"
 
 	_ "github.com/Bitummit/blog_api_golang/docs"
@@ -36,7 +37,7 @@ type HTTPServer struct {
 	Storage blogservice.PostQueryFunctions
 	Cfg *config.Config
 	Router chi.Router
-	Kafka blogservice.KafkaService
+	Kafka my_kafka.KafkaService
 }
 
 
@@ -46,18 +47,18 @@ func StartServer(server *HTTPServer) error{
 	ctx, cancel := context.WithCancel(ctx) // TODO: make it useful
 	defer cancel()
 
-	server.Kafka = blogservice.NewKafka(server.Log)
+	server.Kafka = my_kafka.New(server.Log)
 
 	server.Router.Use(middleware.RequestID)
 	server.Router.Use(middleware.RealIP)
 	server.Router.Use(middleware.Logger)
 	server.Router.Use(middleware.Recoverer)
 	server.Router.Use(middleware.URLFormat)
-	server.Router.Use(internal.SetJSONContentType)
+	server.Router.Use(middlewares.SetJSONContentType)
 
 	server.Router.Post("/post/", server.CreatePostHandler)
 	server.Router.With(
-		internal.CheckTokenMiddleware(server.Log),
+		middlewares.CheckTokenMiddleware(server.Log),
 	).Get("/post/", server.ListPostHandler,)
 	server.Router.Get("/post/{id}/", server.GetPostHandler)
 	server.Router.Delete("/post/{id}/", server.DeletePostHandler)
@@ -82,11 +83,9 @@ func StartServer(server *HTTPServer) error{
 		return fmt.Errorf("server stopped %v", err)
 	}
 
-	// Graceful shutdown
 	server.Log.Info("Server stopped")
 	return nil
 }
-
 
 func (s *HTTPServer) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	s.Log = slog.With(
@@ -283,7 +282,6 @@ func (s *HTTPServer) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		Response: utils.OK(),
 		Token: *token,
 	}
-
 	w.WriteHeader(http.StatusOK)
 	render.JSON(w, r, resp)
 
@@ -335,7 +333,6 @@ func (s *HTTPServer) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		Response: utils.OK(),
 		Token: *token,
 	}
-
 	w.WriteHeader(http.StatusOK)
 	render.JSON(w, r, resp)
 

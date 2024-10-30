@@ -1,4 +1,4 @@
-package blogservice
+package my_kafka
 
 import (
 	"log/slog"
@@ -11,13 +11,13 @@ type KafkaService struct {
 }
 
 
-func NewKafka(log *slog.Logger) KafkaService {
+func New(log *slog.Logger) KafkaService {
 	return KafkaService{
 		log: log,
 	}
 }
 
-func (k *KafkaService)ConnectProducer(brokers []string) (sarama.SyncProducer, error) {
+func (k *KafkaService) ConnectProducer(brokers []string) (sarama.SyncProducer, error) {
 	config := sarama.NewConfig()
 	config.Producer.Return.Successes = true
 	config.Producer.RequiredAcks = sarama.WaitForAll
@@ -27,7 +27,7 @@ func (k *KafkaService)ConnectProducer(brokers []string) (sarama.SyncProducer, er
 }
 
 
-func (k *KafkaService)ConnectConsumer(brokers []string) (sarama.Consumer, error) {
+func (k *KafkaService) ConnectConsumer(brokers []string) (sarama.Consumer, error) {
 	config := sarama.NewConfig()
 	config.Consumer.Return.Errors = true
 
@@ -35,7 +35,7 @@ func (k *KafkaService)ConnectConsumer(brokers []string) (sarama.Consumer, error)
 }
 
 
-func (k *KafkaService)PushPostToQueue(message []byte) error {
+func (k *KafkaService) PushPostToQueue(message []byte) error {
 	brokers := []string {"localhost:9092"}
 
 	// Connect to producer
